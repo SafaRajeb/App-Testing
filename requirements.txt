@@ -1,1 +1,3 @@
-pip install matplotlib
+streamlit
+pandas
+matplotlib
