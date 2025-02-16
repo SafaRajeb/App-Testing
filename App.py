@@ -34,14 +34,26 @@ merged_data.fillna(0, inplace=True)
 
 # Compute Metrics
 for month in months:
-    merged_data[month + "_Net"] = merged_data[month + "_Created"] - (
-        merged_data[month + "_Rejected"] + merged_data[month + "_Resolved"])
+    created_col = month + "_Created"
+    rejected_col = month + "_Rejected"
+    resolved_col = month + "_Resolved"
+    
+    # Ensure columns exist before accessing them
+    if rejected_col not in merged_data:
+        merged_data[rejected_col] = 0
+    if resolved_col not in merged_data:
+        merged_data[resolved_col] = 0
+    
+    merged_data[month + "_Net"] = merged_data[created_col] - (
+        merged_data[rejected_col] + merged_data[resolved_col])
 
 merged_data["Total_Created"] = merged_data[[col for col in merged_data.columns if "Created" in col]].sum(axis=1)
 merged_data["Total_Rejected"] = merged_data[[col for col in merged_data.columns if "Rejected" in col]].sum(axis=1)
 merged_data["Total_Resolved"] = merged_data[[col for col in merged_data.columns if "Resolved" in col]].sum(axis=1)
 merged_data["Net_Growth"] = merged_data["Total_Created"] - (merged_data["Total_Rejected"] + merged_data["Total_Resolved"])
-merged_data["Resolution_Rate"] = merged_data["Total_Resolved"] / (merged_data["Total_Created"] - merged_data["Total_Rejected"])
+
+# Avoid division by zero in Resolution Rate
+merged_data["Resolution_Rate"] = merged_data["Total_Resolved"] / merged_data[["Total_Created"].subtract(merged_data["Total_Rejected"])].replace(0, 1)
 merged_data["Resolution_Rate"].fillna(0, inplace=True)
 
 # Display Data
