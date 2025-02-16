@@ -1,5 +1,7 @@
 import streamlit as st
 import pandas as pd
+import matplotlib
+matplotlib.use('Agg')  # Ensure compatibility with Streamlit
 import matplotlib.pyplot as plt
 
 # Streamlit App Title
