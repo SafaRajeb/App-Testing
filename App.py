@@ -53,7 +53,9 @@ merged_data["Total_Resolved"] = merged_data[[col for col in merged_data.columns 
 merged_data["Net_Growth"] = merged_data["Total_Created"] - (merged_data["Total_Rejected"] + merged_data["Total_Resolved"])
 
 # Avoid division by zero in Resolution Rate
-merged_data["Resolution_Rate"] = merged_data["Total_Resolved"] / merged_data[["Total_Created"].subtract(merged_data["Total_Rejected"])].replace(0, 1)
+merged_data["Adjusted_Total_Created"] = merged_data["Total_Created"] - merged_data["Total_Rejected"]
+merged_data["Adjusted_Total_Created"] = merged_data["Adjusted_Total_Created"].replace(0, 1)  # Prevent division by zero
+merged_data["Resolution_Rate"] = merged_data["Total_Resolved"] / merged_data["Adjusted_Total_Created"]
 merged_data["Resolution_Rate"].fillna(0, inplace=True)
 
 # Display Data
