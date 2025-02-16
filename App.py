@@ -1,7 +1,5 @@
 import streamlit as st
 import pandas as pd
-import matplotlib
-matplotlib.use("agg")  # Ensure compatibility with Streamlit
 import matplotlib.pyplot as plt
 
 # Streamlit App Title
@@ -20,7 +18,7 @@ def input_ticket_data(label):
     df = pd.DataFrame(columns=data_columns)
     for i in range(years):
         year = st.number_input(f"Year {i+1} ({label})", min_value=2000, max_value=2100, step=1, key=f"year_{label}_{i}")
-        row = [year] + [st.number_input(f"{month} ({year})", min_value=0, step=1, key=f"{label}_{year}_{month}") for month in months]
+        row = [year] + [st.number_input(f"{month} ({year})", min_value=0, step=1, key=f"{label}_{year}_{month}_{i}") for month in months]
         df.loc[i] = row
     return df
 
