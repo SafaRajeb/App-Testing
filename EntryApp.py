@@ -12,7 +12,7 @@ def initialize_session():
 
 def generate_month_grid(start_year, end_year):
     columns = ["Year"] + [datetime.date(2000, i, 1).strftime('%B') for i in range(1, 13)]
-    rows = [[year] + [None] * 12 for year in range(start_year, end_year + 1)]
+    rows = [[year] + [0] * 12 for year in range(start_year, end_year + 1)]
     return pd.DataFrame(rows, columns=columns)
 
 def main():
@@ -40,7 +40,7 @@ def main():
     
     st.subheader(f"Data Entry Grid for {service_unit} - {data_type}")
     df = st.session_state.ticket_data[service_unit]
-    df = st.data_editor(df, num_rows="dynamic")
+    df = st.data_editor(df, num_rows="dynamic", key=f"data_{service_unit}_{data_type}")
     st.session_state.ticket_data[service_unit] = df
     
     # Get current month and count months from start
