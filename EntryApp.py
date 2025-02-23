@@ -50,15 +50,15 @@ def main():
     # Store the edited data back into session state
     st.session_state.ticket_data[data_type][service_unit] = edited_df.copy()
     
-    # Calculate the first month with data above 0
+    # Calculate total months from the first non-zero entry onward
     df_values = edited_df.iloc[:, 1:].values.flatten()
     first_nonzero_index = next((i for i, x in enumerate(df_values) if x > 0), None)
-    first_nonzero_month = first_nonzero_index // 12 if first_nonzero_index is not None else 0
+    first_nonzero_year = edited_df.iloc[first_nonzero_index // 12, 0] if first_nonzero_index is not None else start_year
+    first_nonzero_month = (first_nonzero_index % 12) + 1 if first_nonzero_index is not None else 1
     
-    # Get current month and count months from first month with data to now
     current_year = datetime.datetime.now().year
     current_month = datetime.datetime.now().month
-    total_months = ((current_year - start_year) * 12 + current_month) - first_nonzero_month if first_nonzero_index is not None else 0
+    total_months = ((current_year - first_nonzero_year) * 12 + current_month - first_nonzero_month + 1) if first_nonzero_index is not None else 0
     
     st.sidebar.write(f"Total Months Counted: {total_months}")
     
@@ -69,10 +69,23 @@ def main():
         total_effort_hours = new_tickets_per_month * effort_per_ticket
         fte_required = total_effort_hours / (160 * time_horizon)  # Assuming 160 hours per FTE per month
         
+        net_open_tickets_per_month = total_created_tickets / total_months if total_months > 0 else 0
+        growth_rate_per_month = (new_tickets_per_month - net_open_tickets_per_month) / net_open_tickets_per_month if net_open_tickets_per_month > 0 else 0
+        avg_monthly_growth_rate = growth_rate_per_month * 100
+        avg_yearly_growth_rate = avg_monthly_growth_rate * 12
+        yearly_growth_factor = (1 + growth_rate_per_month) ** 12
+        yearly_growth_tickets = total_created_tickets * yearly_growth_factor
+        
         st.write(f"**New Tickets Per Month:** {new_tickets_per_month:.2f}")
         st.write(f"**Total Created Tickets:** {total_created_tickets}")
         st.write(f"**Total Effort (Hours):** {total_effort_hours:.2f} hours")
         st.write(f"**FTE Required:** {fte_required:.2f} Full-Time Employees")
+        st.write(f"**Net Open Tickets/Month:** {net_open_tickets_per_month:.2f}")
+        st.write(f"**Growth Rate/Month:** {growth_rate_per_month:.2%}")
+        st.write(f"**Average Monthly Growth Rate:** {avg_monthly_growth_rate:.2f}%")
+        st.write(f"**Average Yearly Growth Rate:** {avg_yearly_growth_rate:.2f}%")
+        st.write(f"**Yearly Growth Factor:** {yearly_growth_factor:.2f}")
+        st.write(f"**Yearly Growth Tickets:** {yearly_growth_tickets:.2f}")
     
 if __name__ == "__main__":
     main()
