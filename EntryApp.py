@@ -8,7 +8,7 @@ def initialize_session():
     if "selected_unit" not in st.session_state:
         st.session_state.selected_unit = "Unit A"
     if "ticket_data" not in st.session_state:
-        st.session_state.ticket_data = {}
+        st.session_state.ticket_data = {"Created Tickets": {}, "Resolved Tickets": {}, "Rejected Tickets": {}}
 
 def generate_month_grid(start_year, end_year):
     columns = ["Year"] + [datetime.date(2000, i, 1).strftime('%B') for i in range(1, 13)]
@@ -36,17 +36,11 @@ def main():
     start_year = st.number_input("Enter Start Year", min_value=2000, max_value=2100, value=datetime.datetime.now().year)
     end_year = st.number_input("Enter End Year", min_value=start_year, max_value=2100, value=datetime.datetime.now().year)
     
-    if service_unit not in st.session_state.ticket_data or "grid_years" not in st.session_state:
-        st.session_state.ticket_data[service_unit] = generate_month_grid(start_year, end_year)
-        st.session_state.grid_years = (start_year, end_year)
-    
-    # Check if years have changed and update grid if necessary
-    if (start_year, end_year) != st.session_state.grid_years:
-        st.session_state.ticket_data[service_unit] = generate_month_grid(start_year, end_year)
-        st.session_state.grid_years = (start_year, end_year)
+    if service_unit not in st.session_state.ticket_data[data_type]:
+        st.session_state.ticket_data[data_type][service_unit] = generate_month_grid(start_year, end_year)
     
     st.subheader(f"Data Entry Grid for {service_unit} - {data_type}")
-    df = st.session_state.ticket_data[service_unit]
+    df = st.session_state.ticket_data[data_type][service_unit]
     edited_df = st.data_editor(df, num_rows="dynamic", use_container_width=True, key=f"data_{service_unit}_{data_type}")
     
     # Ensure year column is mandatory
@@ -54,20 +48,29 @@ def main():
     edited_df["Year"] = edited_df["Year"].astype(int)
     
     # Store the edited data back into session state
-    st.session_state.ticket_data[service_unit] = edited_df.copy()
+    st.session_state.ticket_data[data_type][service_unit] = edited_df.copy()
     
-    # Get current month and count months from start
+    # Calculate the first month with data above 0
+    df_values = edited_df.iloc[:, 1:].values.flatten()
+    first_nonzero_index = next((i for i, x in enumerate(df_values) if x > 0), None)
+    first_nonzero_month = first_nonzero_index // 12 if first_nonzero_index is not None else 0
+    
+    # Get current month and count months from first month with data to now
+    current_year = datetime.datetime.now().year
     current_month = datetime.datetime.now().month
-    total_months = (end_year - start_year) * 12 + current_month if start_year < end_year else current_month
+    total_months = ((current_year - start_year) * 12 + current_month) - first_nonzero_month if first_nonzero_index is not None else 0
+    
     st.sidebar.write(f"Total Months Counted: {total_months}")
     
     if st.button("Calculate Projection"):
         st.subheader("Projection Results")
-        new_tickets_per_month = total_months  # Since it depends on counting input months
+        total_created_tickets = edited_df.iloc[:, 1:].sum().sum()
+        new_tickets_per_month = total_created_tickets / total_months if total_months > 0 else 0
         total_effort_hours = new_tickets_per_month * effort_per_ticket
         fte_required = total_effort_hours / (160 * time_horizon)  # Assuming 160 hours per FTE per month
         
-        st.write(f"**New Tickets Per Month:** {new_tickets_per_month}")
+        st.write(f"**New Tickets Per Month:** {new_tickets_per_month:.2f}")
+        st.write(f"**Total Created Tickets:** {total_created_tickets}")
         st.write(f"**Total Effort (Hours):** {total_effort_hours:.2f} hours")
         st.write(f"**FTE Required:** {fte_required:.2f} Full-Time Employees")
     
