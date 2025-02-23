@@ -43,8 +43,12 @@ def main():
     df = st.session_state.ticket_data[service_unit]
     edited_df = st.data_editor(df, num_rows="dynamic", use_container_width=True, key=f"data_{service_unit}_{data_type}")
     
+    # Ensure year column is mandatory
+    edited_df.dropna(subset=["Year"], inplace=True)
+    edited_df["Year"] = edited_df["Year"].astype(int)
+    
     # Store the edited data back into session state
-    st.session_state.ticket_data[service_unit] = edited_df
+    st.session_state.ticket_data[service_unit] = edited_df.copy()
     
     # Get current month and count months from start
     current_month = datetime.datetime.now().month
