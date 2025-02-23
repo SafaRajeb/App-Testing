@@ -34,10 +34,16 @@ def main():
     
     # Define the data entry grid
     start_year = st.number_input("Enter Start Year", min_value=2000, max_value=2100, value=datetime.datetime.now().year)
-    end_year = st.number_input("Enter End Year", min_value=start_year, max_value=2100, value=start_year)
+    end_year = st.number_input("Enter End Year", min_value=start_year, max_value=2100, value=datetime.datetime.now().year)
     
-    if service_unit not in st.session_state.ticket_data:
+    if service_unit not in st.session_state.ticket_data or "grid_years" not in st.session_state:
         st.session_state.ticket_data[service_unit] = generate_month_grid(start_year, end_year)
+        st.session_state.grid_years = (start_year, end_year)
+    
+    # Check if years have changed and update grid if necessary
+    if (start_year, end_year) != st.session_state.grid_years:
+        st.session_state.ticket_data[service_unit] = generate_month_grid(start_year, end_year)
+        st.session_state.grid_years = (start_year, end_year)
     
     st.subheader(f"Data Entry Grid for {service_unit} - {data_type}")
     df = st.session_state.ticket_data[service_unit]
