@@ -16,6 +16,7 @@ def generate_month_grid(start_year, end_year):
     return pd.DataFrame(rows, columns=columns)
 
 def main():
+    st.set_page_config(layout="wide")  # Set wide layout for better visibility
     st.title("Ticket Projection Model")
     initialize_session()
     
@@ -40,8 +41,10 @@ def main():
     
     st.subheader(f"Data Entry Grid for {service_unit} - {data_type}")
     df = st.session_state.ticket_data[service_unit]
-    df = st.data_editor(df, num_rows="dynamic", key=f"data_{service_unit}_{data_type}")
-    st.session_state.ticket_data[service_unit] = df
+    edited_df = st.data_editor(df, num_rows="dynamic", use_container_width=True, key=f"data_{service_unit}_{data_type}")
+    
+    # Store the edited data back into session state
+    st.session_state.ticket_data[service_unit] = edited_df
     
     # Get current month and count months from start
     current_month = datetime.datetime.now().month
